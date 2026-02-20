@@ -22,4 +22,4 @@ COPY --from=builder /app/Assets ./Assets
 
 EXPOSE 8000
 
-CMD ["node", "dist/index.js"]
+CMD ["sh", "-c", "echo \"$COOKIES_CONTENT\" > cookies.txt && node dist/index.js"]

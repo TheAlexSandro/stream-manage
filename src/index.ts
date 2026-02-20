@@ -19,13 +19,13 @@ bot.on("callback_query", (ctx: NonNullable<Context>) => {
   return CallbackQuery.handle(ctx, bot);
 });
 
-if (process.env["COOKIES_CONTENT"]) {
-  fs.writeFileSync(
-    "cookies.txt",
-    String(process.env["COOKIES_CONTENT"]).replace(/"/g, "").trim(),
-  );
-  console.log("Cookies created.");
-}
+// if (process.env["COOKIES_CONTENT"]) {
+//   fs.writeFileSync(
+//     "cookies.txt",
+//     String(process.env["COOKIES_CONTENT"]).replace(/"/g, "").trim(),
+//   );
+//   console.log("Cookies created.");
+// }
 
 bot.start({
   drop_pending_updates: true,

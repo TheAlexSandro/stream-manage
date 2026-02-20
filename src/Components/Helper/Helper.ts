@@ -131,6 +131,9 @@ export class Helper {
       "--print",
       "is_live",
       "--no-warnings",
+      "--skip-download",
+      "--js-runtime",
+      "node",
       url,
     ]);
     proc.stdout.on("data", (d) => {

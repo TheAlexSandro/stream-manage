@@ -30,7 +30,6 @@ bot.start({
   drop_pending_updates: true,
   allowed_updates: ["message", "callback_query"],
 });
-console.log(`BOT STARTED`);
 
 new Elysia({ adapter: node() })
   .get("/", ({ status }) => {
@@ -39,3 +38,4 @@ new Elysia({ adapter: node() })
   .listen(port, ({ port }) => {
     console.log(`Listening on ${port} port.`);
   });
+console.log(`BOT STARTED`);

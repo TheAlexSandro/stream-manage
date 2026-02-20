@@ -19,3 +19,5 @@ COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/node_modules ./node_modules
 
 COPY --from=builder /app/Assets ./Assets
+
+EXPOSE 8000

@@ -24,6 +24,7 @@ if (process.env["COOKIES_CONTENT"]) {
     "cookies.txt",
     String(process.env["COOKIES_CONTENT"]).replace(/"/g, "").trim(),
   );
+  console.log("Cookies created.");
 }
 
 bot.start({

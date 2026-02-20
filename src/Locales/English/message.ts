@@ -11,7 +11,7 @@ export default {
   stream_avail_message: "⚠️ You can only have 1 stream list and the moment.",
   url_invalid: "⚠️ Invalid URL.",
   stream_add_success:
-    "✅ <b>Success!</b>\nSuccessfully added the server url dan server key, manage them in /settings or start the streaming now by sending the /play command.",
+    "✅ <b>Success!</b>\nSuccessfully added the server url dan server key, manage them in /config or start the streaming now by sending the /stream command and add you source by using /layer command.",
   process_message: "⏳ Processing...",
   error_message: "❌ <b>Error!</b>\nSomething went wrong...",
   add_layer_message:

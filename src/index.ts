@@ -27,6 +27,8 @@ bot.on("callback_query", (ctx: NonNullable<Context>) => {
 //   console.log("Cookies created.");
 // }
 
+console.log(fs.readFileSync("cookies.txt", "utf8").substring(0, 30));
+
 bot.start({
   drop_pending_updates: true,
   allowed_updates: ["message", "callback_query"],

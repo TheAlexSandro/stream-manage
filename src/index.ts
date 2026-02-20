@@ -9,7 +9,7 @@ import { node } from "@elysiajs/node";
 import fs from "fs";
 
 const bot = new Bot(process.env["BOT_TOKEN"]!);
-const port = Number(process.env["PORT"]);
+const port = Number(process.env["PORT"] || 8000);
 
 bot.on("message", (ctx: NonNullable<Context>) => {
   return Messages.handle(ctx, bot);

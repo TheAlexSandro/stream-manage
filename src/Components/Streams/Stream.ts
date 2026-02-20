@@ -151,7 +151,6 @@ export class Streams {
         "1",
       );
     } else {
-      args.push("-re");
       if (!isYT) {
         args.push(
           "-reconnect",
@@ -240,12 +239,21 @@ export class Streams {
     );
 
     let afParts = [];
-    if (playbackSpeed !== 1) {
+    if (playbackSpeed && playbackSpeed !== 1) {
       let remainingSpeed = playbackSpeed;
+
+      if (remainingSpeed < 0.5) {
+        remainingSpeed = 0.5;
+      }
       while (remainingSpeed > 2.0) {
         afParts.push("atempo=2.0");
         remainingSpeed /= 2.0;
       }
+      while (remainingSpeed < 0.5) {
+        afParts.push("atempo=0.5");
+        remainingSpeed *= 2.0;
+      }
+
       afParts.push(`atempo=${remainingSpeed.toFixed(2)}`);
     }
 

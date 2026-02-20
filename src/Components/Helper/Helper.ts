@@ -126,10 +126,8 @@ export class Helper {
 
   static isLive(url: string, callback: Callback<boolean | null>) {
     const proc = spawn("yt-dlp", [
-      "--cookies",
-      path.join(process.cwd(), "cookies.txt"),
-      "--extractor-args",
-      "youtube:player_client=android,player_skip=webpage",
+      "--cookies-from-browser",
+      "chrome",
       "--print",
       "is_live",
       "--no-warnings",

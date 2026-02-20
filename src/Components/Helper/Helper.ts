@@ -126,8 +126,8 @@ export class Helper {
 
   static isLive(url: string, callback: Callback<boolean | null>) {
     const proc = spawn("yt-dlp", [
-      "--cookies-from-browser",
-      "chrome",
+      "--cookies",
+      path.join(process.cwd(), "cookies.txt"),
       "--print",
       "is_live",
       "--no-warnings",

@@ -22,4 +22,4 @@ COPY --from=builder /app/Assets ./Assets
 
 EXPOSE 8000
 
-CMD ["sh", "-c", "printf \"%s\" \"$COOKIES_CONTENT\" > cookies.txt && node dist/index.js"]
+CMD ["sh", "-c", "echo \"$COOKIES_CONTENT\" | base64 -d > cookies.txt && node dist/index.js"]

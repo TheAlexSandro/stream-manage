@@ -4,6 +4,7 @@ import { t } from "../../Middlewares/i18n";
 import type { Callback } from "../../types/type";
 import { spawn } from "child_process";
 import { Cache } from "../Caches/Cache";
+import path from "path";
 
 export class Helper {
   static getName(ctx: Context) {
@@ -124,7 +125,14 @@ export class Helper {
   }
 
   static isLive(url: string, callback: Callback<boolean | null>) {
-    const proc = spawn("yt-dlp", ["--print", "is_live", "--no-warnings", url]);
+    const proc = spawn("yt-dlp", [
+      "--print",
+      "is_live",
+      "--no-warnings",
+      "--cokies",
+      path.join(process.cwd(), "cookies.txt"),
+      url,
+    ]);
     proc.stdout.on("data", (d) => {
       return callback(null, d.toString().trim() === "True");
     });

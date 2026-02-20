@@ -15,7 +15,8 @@ export class CallbackQuery {
     const chatID = String(ctx.chat?.id);
     let match;
 
-    if (/silent_$/i.exec(cbData)) return ctx.answerCallbackQuery();
+    if (/silent_$/i.exec(cbData))
+      return ctx.answerCallbackQuery().catch(() => {});
     if (/delete_$/i.exec(cbData)) return ctx.deleteMessage().catch(() => {});
 
     if (/cancel_session$/i.exec(cbData)) {
@@ -24,7 +25,7 @@ export class CallbackQuery {
       Cache.del(`session_play_${chatID}`);
       Cache.del(`session_add_${chatID}`);
       Cache.del(`session_key_${chatID}`);
-      ctx.editMessageText(t("en", "cancelled_message"));
+      ctx.editMessageText(t("en", "cancelled_message")).catch(() => {});
       return;
     }
 
@@ -45,12 +46,14 @@ export class CallbackQuery {
         Cache.set(`session_add_${chatID}`, true);
       }
 
-      //@ts-ignore
-      ctx.editMessageText(t("en", msg), {
-        parse_mode: "HTML",
-        reply_markup: markup.inlineKeyboard(keyb),
-      });
-      ctx.answerCallbackQuery();
+      ctx
+        //@ts-ignore
+        .editMessageText(t("en", msg), {
+          parse_mode: "HTML",
+          reply_markup: markup.inlineKeyboard(keyb),
+        })
+        .catch(() => {});
+      ctx.answerCallbackQuery().catch(() => {});
       return;
     }
 
@@ -59,10 +62,12 @@ export class CallbackQuery {
       const streamId = match[2];
       const streamKey = Cache.get(`stream_key_${streamId}`);
       if (!streamKey) {
-        ctx.answerCallbackQuery({
-          text: t("en", "stream_key_not_found_message"),
-          show_alert: true,
-        });
+        ctx
+          .answerCallbackQuery({
+            text: t("en", "stream_key_not_found_message"),
+            show_alert: true,
+          })
+          .catch(() => {});
         ctx.deleteMessage().catch(() => {});
         return;
       }
@@ -72,9 +77,11 @@ export class CallbackQuery {
       if (type === "all") {
         StreamHelper.abort(streamId, chatID);
       }
-      ctx.editMessageText(t("en", "abort_succ_message"), {
-        parse_mode: "HTML",
-      });
+      ctx
+        .editMessageText(t("en", "abort_succ_message"), {
+          parse_mode: "HTML",
+        })
+        .catch(() => {});
       return;
     }
 
@@ -84,10 +91,12 @@ export class CallbackQuery {
       const streamId = match[3];
       const streamKey = Cache.get(`stream_key_${streamId}`);
       if (!streamKey) {
-        ctx.answerCallbackQuery({
-          text: t("en", "stream_key_not_found_message"),
-          show_alert: true,
-        });
+        ctx
+          .answerCallbackQuery({
+            text: t("en", "stream_key_not_found_message"),
+            show_alert: true,
+          })
+          .catch(() => {});
         ctx.deleteMessage().catch(() => {});
         return;
       }
@@ -98,21 +107,25 @@ export class CallbackQuery {
         const isStarted = Cache.get(`stream_${streamId}`);
 
         if (!getSource) {
-          return ctx.answerCallbackQuery({
-            text: t("en", "source_empty_message"),
-            show_alert: true,
-          });
+          return ctx
+            .answerCallbackQuery({
+              text: t("en", "source_empty_message"),
+              show_alert: true,
+            })
+            .catch(() => {});
         }
 
         if (act === "select") {
           if (index === Number(Cache.get(`source_index_${streamId}`)))
-            return ctx.answerCallbackQuery();
+            return ctx.answerCallbackQuery().catch(() => {});
 
           if (isStarted && Cache.get(`blocks_${streamId}`))
-            return ctx.answerCallbackQuery({
-              text: t("en", "wait_act_message"),
-              show_alert: true,
-            });
+            return ctx
+              .answerCallbackQuery({
+                text: t("en", "wait_act_message"),
+                show_alert: true,
+              })
+              .catch(() => {});
 
           const layersForSelect = String(getSource).split("<>");
           const picked = layersForSelect[index];
@@ -141,10 +154,12 @@ export class CallbackQuery {
                 btn.text(t("en", "return_button"), `layer_list_0_${streamId}`),
               ];
 
-              ctx.editMessageText(t("en", "change_menu_message"), {
-                parse_mode: "HTML",
-                reply_markup: markup.inlineKeyboard(keybs),
-              });
+              ctx
+                .editMessageText(t("en", "change_menu_message"), {
+                  parse_mode: "HTML",
+                  reply_markup: markup.inlineKeyboard(keybs),
+                })
+                .catch(() => {});
             } else {
               var keybs: any[] = [];
               keybs = [
@@ -160,19 +175,21 @@ export class CallbackQuery {
                 ),
               ];
 
-              ctx.editMessageText(
-                t("en", "change_confirm_message", {
-                  source_1:
-                    layersForSelect[
-                      Number(Cache.get(`source_index_${streamId}`))
-                    ].split("|")[0],
-                  source_2: layersForSelect[index].split("|")[0],
-                }),
-                {
-                  parse_mode: "HTML",
-                  reply_markup: markup.inlineKeyboard(keybs),
-                },
-              );
+              ctx
+                .editMessageText(
+                  t("en", "change_confirm_message", {
+                    source_1:
+                      layersForSelect[
+                        Number(Cache.get(`source_index_${streamId}`))
+                      ].split("|")[0],
+                    source_2: layersForSelect[index].split("|")[0],
+                  }),
+                  {
+                    parse_mode: "HTML",
+                    reply_markup: markup.inlineKeyboard(keybs),
+                  },
+                )
+                .catch(() => {});
             }
             return;
           } else {
@@ -184,19 +201,23 @@ export class CallbackQuery {
         const layers = String(getSource).split("<>");
         if (act === "delete") {
           if (isStarted && Cache.get(`blocks_${streamId}`))
-            return ctx.answerCallbackQuery({
-              text: t("en", "wait_act_message"),
-              show_alert: true,
-            });
+            return ctx
+              .answerCallbackQuery({
+                text: t("en", "wait_act_message"),
+                show_alert: true,
+              })
+              .catch(() => {});
 
           if (
             isStarted &&
             Number(Cache.get(`source_index_${streamId}`)) === index
           )
-            return ctx.answerCallbackQuery({
-              text: t("en", "used_source_message"),
-              show_alert: true,
-            });
+            return ctx
+              .answerCallbackQuery({
+                text: t("en", "used_source_message"),
+                show_alert: true,
+              })
+              .catch(() => {});
 
           layers.splice(index, 1);
           const newRawSource = layers.join("<>");
@@ -236,31 +257,37 @@ export class CallbackQuery {
           ]);
         }
 
-        return ctx.editMessageText(
-          t("en", "layer_list_message", { max_layer: String(maxLayer) }),
-          {
-            parse_mode: "HTML",
-            reply_markup: markup.inlineKeyboard(keyb),
-          },
-        );
+        return ctx
+          .editMessageText(
+            t("en", "layer_list_message", { max_layer: String(maxLayer) }),
+            {
+              parse_mode: "HTML",
+              reply_markup: markup.inlineKeyboard(keyb),
+            },
+          )
+          .catch(() => {});
       }
 
       if (/(startBegin|startLast)/i.exec(act)) {
         const getSource = Cache.get(`raw_source_${streamId}`);
         if (!getSource)
-          return ctx.answerCallbackQuery({
-            text: t("en", "source_empty_message"),
-            show_alert: true,
-          });
+          return ctx
+            .answerCallbackQuery({
+              text: t("en", "source_empty_message"),
+              show_alert: true,
+            })
+            .catch(() => {});
 
         const layersForSelect = String(getSource).split("<>");
         const sourceId = layersForSelect[index].split("|")[2];
         const isYtLive = Cache.get(`is_live_yt_${sourceId}_${streamId}`);
         if (isYtLive)
-          return ctx.answerCallbackQuery({
-            text: t("en", "opt_unv_yt_message"),
-            show_alert: true,
-          });
+          return ctx
+            .answerCallbackQuery({
+              text: t("en", "opt_unv_yt_message"),
+              show_alert: true,
+            })
+            .catch(() => {});
 
         var keybs: any[] = [];
         keybs = [
@@ -280,19 +307,21 @@ export class CallbackQuery {
           Cache.set(`start_last_${sourceId}_${streamId}`, true);
         }
 
-        ctx.editMessageText(
-          t("en", "change_confirm_message", {
-            source_1:
-              layersForSelect[
-                Number(Cache.get(`source_index_${streamId}`))
-              ].split("|")[0],
-            source_2: layersForSelect[index].split("|")[0],
-          }),
-          {
-            parse_mode: "HTML",
-            reply_markup: markup.inlineKeyboard(keybs),
-          },
-        );
+        ctx
+          .editMessageText(
+            t("en", "change_confirm_message", {
+              source_1:
+                layersForSelect[
+                  Number(Cache.get(`source_index_${streamId}`))
+                ].split("|")[0],
+              source_2: layersForSelect[index].split("|")[0],
+            }),
+            {
+              parse_mode: "HTML",
+              reply_markup: markup.inlineKeyboard(keybs),
+            },
+          )
+          .catch(() => {});
         return;
       }
 
@@ -300,7 +329,7 @@ export class CallbackQuery {
         const layersForSelect = String(getSource).split("<>");
         const picked = layersForSelect[index];
 
-        ctx.editMessageText(t("en", "ch_source_message"));
+        ctx.editMessageText(t("en", "ch_source_message")).catch(() => {});
         Cache.set(`source_index_${streamId}`, index);
         Cache.set(`used_source_${streamId}`, picked);
         Cache.set(`ch_message_id_${streamId}`, cb!.message!.message_id);
@@ -317,10 +346,12 @@ export class CallbackQuery {
             getSource ? `layer_list_0_${streamId}` : `cancel_session`,
           ),
         ];
-        ctx.editMessageText(t("en", "send_name_layer_message"), {
-          parse_mode: "HTML",
-          reply_markup: markup.inlineKeyboard(keyb),
-        });
+        ctx
+          .editMessageText(t("en", "send_name_layer_message"), {
+            parse_mode: "HTML",
+            reply_markup: markup.inlineKeyboard(keyb),
+          })
+          .catch(() => {});
         Cache.set(`session_name_layer_${chatID}`, true);
         return;
       }
@@ -332,15 +363,20 @@ export class CallbackQuery {
 
       const streamKey = Cache.get(`stream_key_${streamId}`);
       if (!streamKey) {
-        ctx.answerCallbackQuery({
-          text: t("en", "stream_key_not_found_message"),
-          show_alert: true,
-        });
+        ctx
+          .answerCallbackQuery({
+            text: t("en", "stream_key_not_found_message"),
+            show_alert: true,
+          })
+          .catch(() => {});
         ctx.deleteMessage().catch(() => {});
         return;
       }
 
-      ctx.editMessageText(t("en", "process_message")).catch(() => {});
+      ctx
+        .editMessageText(t("en", "process_message"))
+        .catch(() => {})
+        .catch(() => {});
       if (act === "stop") {
         Streams.stop(streamId);
       }
@@ -355,10 +391,12 @@ export class CallbackQuery {
       const streamId = match[2];
       const streamKey = Cache.get(`stream_key_${streamId}`);
       if (!streamKey) {
-        ctx.answerCallbackQuery({
-          text: t("en", "stream_key_not_found_message"),
-          show_alert: true,
-        });
+        ctx
+          .answerCallbackQuery({
+            text: t("en", "stream_key_not_found_message"),
+            show_alert: true,
+          })
+          .catch(() => {});
         ctx.deleteMessage().catch(() => {});
         return;
       }
@@ -420,12 +458,15 @@ export class CallbackQuery {
                 .deleteMessage(chatID, Number(Cache.get(`restart_${streamId}`)))
                 .catch(() => {});
               Cache.set(`restart_${streamId}`, cb!.message!.message_id);
-              ctx.reply(t("en", "change_detect_message"), {
-                parse_mode: "HTML",
-                reply_markup: markup.inlineKeyboard(keybs),
-              });
+              ctx
+                .reply(t("en", "change_detect_message"), {
+                  parse_mode: "HTML",
+                  reply_markup: markup.inlineKeyboard(keybs),
+                })
+                .catch(() => {});
             }
-          });
+          })
+          .catch(() => {});
         return;
       }
 
@@ -435,12 +476,16 @@ export class CallbackQuery {
       }
 
       if (act === "restart") {
-        bot.api.deleteMessage(chatID, Number(Cache.get(`restart_${streamId}`)));
+        bot.api
+          .deleteMessage(chatID, Number(Cache.get(`restart_${streamId}`)))
+          .catch(() => {});
         Cache.del(`restart_${streamId}`);
 
-        ctx.editMessageText(t("en", "starting_message"), {
-          parse_mode: "HTML",
-        });
+        ctx
+          .editMessageText(t("en", "starting_message"), {
+            parse_mode: "HTML",
+          })
+          .catch(() => {});
         Cache.set(`restart_msg_id_${streamId}`, cb!.message!.message_id);
         Streams.restart(streamId);
         return;
@@ -448,9 +493,11 @@ export class CallbackQuery {
 
       if (act === "start") {
         Cache.set(`stream_${chatID}`, true);
-        ctx.editMessageText(t("en", "starting_message"), {
-          parse_mode: "HTML",
-        });
+        ctx
+          .editMessageText(t("en", "starting_message"), {
+            parse_mode: "HTML",
+          })
+          .catch(() => {});
         const mediaSource = String(Cache.get(`used_source_${streamId}`)).split(
           "|",
         );
@@ -470,18 +517,22 @@ export class CallbackQuery {
       }
 
       if (act === "cancel") {
-        ctx.editMessageText(t("en", "stream_cancelled_message"), {
-          parse_mode: "HTML",
-        });
+        ctx
+          .editMessageText(t("en", "stream_cancelled_message"), {
+            parse_mode: "HTML",
+          })
+          .catch(() => {});
         return;
       }
 
       if (/(resume|pause|stop)/i.exec(act)) {
         if (Cache.get(`blocks_${streamId}`))
-          return ctx.answerCallbackQuery({
-            text: t("en", "wait_act_message"),
-            show_alert: true,
-          });
+          return ctx
+            .answerCallbackQuery({
+              text: t("en", "wait_act_message"),
+              show_alert: true,
+            })
+            .catch(() => {});
         if (act === "resume") {
           const action = Streams.resume(
             streamId,
@@ -490,25 +541,33 @@ export class CallbackQuery {
             Number(cb!.message!.message_id),
           );
           if (action === "not_paused")
-            return ctx.answerCallbackQuery({
-              text: t("en", "stream_not_paused"),
-              show_alert: true,
-            });
-          ctx.editMessageText(t("en", "starting_message"), {
-            parse_mode: "HTML",
-          });
+            return ctx
+              .answerCallbackQuery({
+                text: t("en", "stream_not_paused"),
+                show_alert: true,
+              })
+              .catch(() => {});
+          ctx
+            .editMessageText(t("en", "starting_message"), {
+              parse_mode: "HTML",
+            })
+            .catch(() => {});
         } else if (act === "pause") {
           const action = Streams.pause(streamId);
           if (action === "paused")
-            return ctx.answerCallbackQuery({
-              text: t("en", "stream_is_paused"),
-              show_alert: true,
-            });
+            return ctx
+              .answerCallbackQuery({
+                text: t("en", "stream_is_paused"),
+                show_alert: true,
+              })
+              .catch(() => {});
 
           const keyb = Helper.generateStreamConfig("paused", streamId, true);
-          ctx.editMessageReplyMarkup({
-            reply_markup: markup.inlineKeyboard(keyb),
-          });
+          ctx
+            .editMessageReplyMarkup({
+              reply_markup: markup.inlineKeyboard(keyb),
+            })
+            .catch(() => {});
         } else if (act === "stop" || act === "forceStop") {
           var keyb = [];
           keyb = [
@@ -524,10 +583,12 @@ export class CallbackQuery {
             ),
           ];
 
-          ctx.editMessageText(t("en", "confirm_stop_message"), {
-            parse_mode: "HTML",
-            reply_markup: markup.inlineKeyboard(keyb),
-          });
+          ctx
+            .editMessageText(t("en", "confirm_stop_message"), {
+              parse_mode: "HTML",
+              reply_markup: markup.inlineKeyboard(keyb),
+            })
+            .catch(() => {});
         }
         return;
       }
@@ -558,10 +619,12 @@ export class CallbackQuery {
           btn.text(t("en", "return_button"), `stream_return_${streamId}`),
         ]);
 
-        ctx.editMessageText(t("en", "tune_message"), {
-          parse_mode: "HTML",
-          reply_markup: markup.inlineKeyboard(keybs),
-        });
+        ctx
+          .editMessageText(t("en", "tune_message"), {
+            parse_mode: "HTML",
+            reply_markup: markup.inlineKeyboard(keybs),
+          })
+          .catch(() => {});
         return;
       }
 
@@ -594,10 +657,12 @@ export class CallbackQuery {
           btn.text(t("en", "return_button"), `stream_return_${streamId}`),
         ]);
 
-        ctx.editMessageText(t("en", "preset_message"), {
-          parse_mode: "HTML",
-          reply_markup: markup.inlineKeyboard(keybs),
-        });
+        ctx
+          .editMessageText(t("en", "preset_message"), {
+            parse_mode: "HTML",
+            reply_markup: markup.inlineKeyboard(keybs),
+          })
+          .catch(() => {});
         return;
       }
 
@@ -606,10 +671,12 @@ export class CallbackQuery {
           Helper.checkOpt(streamId) ||
           Helper.permsYt(streamId).includes("loop")
         )
-          return ctx.answerCallbackQuery({
-            text: t("en", "opt_unv_yt_message"),
-            show_alert: true,
-          });
+          return ctx
+            .answerCallbackQuery({
+              text: t("en", "opt_unv_yt_message"),
+              show_alert: true,
+            })
+            .catch(() => {});
         const getLoop = String(Cache.get(`stream_loop_${streamId}`) ?? 0);
 
         var keybs = [];
@@ -617,10 +684,12 @@ export class CallbackQuery {
           btn.text(t("en", "return_button"), `stream_return_${streamId}`),
         ];
 
-        ctx.editMessageText(t("en", "loop_message", { loop: getLoop }), {
-          parse_mode: "HTML",
-          reply_markup: markup.inlineKeyboard(keybs),
-        });
+        ctx
+          .editMessageText(t("en", "loop_message", { loop: getLoop }), {
+            parse_mode: "HTML",
+            reply_markup: markup.inlineKeyboard(keybs),
+          })
+          .catch(() => {});
         Cache.set(`loop_stream_${chatID}`, streamId);
         return;
       }
@@ -637,10 +706,12 @@ export class CallbackQuery {
           btn.text(t("en", "return_button"), `stream_return_${streamId}`),
         ];
 
-        ctx.editMessageText(t("en", "fps_message"), {
-          parse_mode: "HTML",
-          reply_markup: markup.inlineKeyboard(keybs),
-        });
+        ctx
+          .editMessageText(t("en", "fps_message"), {
+            parse_mode: "HTML",
+            reply_markup: markup.inlineKeyboard(keybs),
+          })
+          .catch(() => {});
         return;
       }
 
@@ -652,14 +723,16 @@ export class CallbackQuery {
           btn.text(t("en", "return_button"), `stream_return_${streamId}`),
         ];
 
-        ctx.editMessageText(
-          //@ts-ignore
-          t("en", `${act}_message`, { value: `${getValue}k` }),
-          {
-            parse_mode: "HTML",
-            reply_markup: markup.inlineKeyboard(keybs),
-          },
-        );
+        ctx
+          .editMessageText(
+            //@ts-ignore
+            t("en", `${act}_message`, { value: `${getValue}k` }),
+            {
+              parse_mode: "HTML",
+              reply_markup: markup.inlineKeyboard(keybs),
+            },
+          )
+          .catch(() => {});
         Cache.set(`bmb_stream_${chatID}`, `${act}|${streamId}`);
         return;
       }
@@ -684,10 +757,12 @@ export class CallbackQuery {
           btn.text(t("en", "return_button"), `stream_return_${streamId}`),
         ];
 
-        ctx.editMessageText(t("en", "bitratea_message"), {
-          parse_mode: "HTML",
-          reply_markup: markup.inlineKeyboard(keybs),
-        });
+        ctx
+          .editMessageText(t("en", "bitratea_message"), {
+            parse_mode: "HTML",
+            reply_markup: markup.inlineKeyboard(keybs),
+          })
+          .catch(() => {});
         return;
       }
 
@@ -715,14 +790,16 @@ export class CallbackQuery {
           btn.text(t("en", "return_button"), `stream_return_${streamId}`),
         ]);
 
-        ctx.editMessageText(
-          //@ts-ignore
-          t("en", `${act}_message`),
-          {
-            parse_mode: "HTML",
-            reply_markup: markup.inlineKeyboard(keybs),
-          },
-        );
+        ctx
+          .editMessageText(
+            //@ts-ignore
+            t("en", `${act}_message`),
+            {
+              parse_mode: "HTML",
+              reply_markup: markup.inlineKeyboard(keybs),
+            },
+          )
+          .catch(() => {});
         return;
       }
 
@@ -746,19 +823,26 @@ export class CallbackQuery {
           btn.text(t("en", "return_button"), `stream_return_${streamId}`),
         ];
 
-        ctx.editMessageText(t("en", "sampleRate_message"), {
-          parse_mode: "HTML",
-          reply_markup: markup.inlineKeyboard(keybs),
-        });
+        ctx
+          .editMessageText(t("en", "sampleRate_message"), {
+            parse_mode: "HTML",
+            reply_markup: markup.inlineKeyboard(keybs),
+          })
+          .catch(() => {});
         return;
       }
 
       if (act === "speed") {
-        if (Helper.checkOpt(streamId) || Helper.permsYt(streamId).includes("speed"))
-          return ctx.answerCallbackQuery({
-            text: t("en", "opt_unv_yt_message"),
-            show_alert: true,
-          });
+        if (
+          Helper.checkOpt(streamId) ||
+          Helper.permsYt(streamId).includes("speed")
+        )
+          return ctx
+            .answerCallbackQuery({
+              text: t("en", "opt_unv_yt_message"),
+              show_alert: true,
+            })
+            .catch(() => {});
         const getPSpeed = String(
           Cache.get(`stream_playback_speed_${streamId}`) ?? "1",
         );
@@ -768,10 +852,12 @@ export class CallbackQuery {
           btn.text(t("en", "return_button"), `stream_return_${streamId}`),
         ];
 
-        ctx.editMessageText(t("en", "playback_message", { value: getPSpeed }), {
-          parse_mode: "HTML",
-          reply_markup: markup.inlineKeyboard(keybs),
-        });
+        ctx
+          .editMessageText(t("en", "playback_message", { value: getPSpeed }), {
+            parse_mode: "HTML",
+            reply_markup: markup.inlineKeyboard(keybs),
+          })
+          .catch(() => {});
         Cache.set(`speed_stream_${chatID}`, streamId);
         return;
       }
@@ -783,10 +869,12 @@ export class CallbackQuery {
       const streamId = match[2];
       const streamKey = Cache.get(`stream_key_${streamId}`);
       if (!streamKey) {
-        ctx.answerCallbackQuery({
-          text: t("en", "stream_key_not_found_message"),
-          show_alert: true,
-        });
+        ctx
+          .answerCallbackQuery({
+            text: t("en", "stream_key_not_found_message"),
+            show_alert: true,
+          })
+          .catch(() => {});
         ctx.deleteMessage().catch(() => {});
         return;
       }
@@ -814,9 +902,11 @@ export class CallbackQuery {
         btn.text(t("en", "return_button"), `stream_return_${streamId}`),
       ]);
 
-      ctx.editMessageReplyMarkup({
-        reply_markup: markup.inlineKeyboard(keybs),
-      });
+      ctx
+        .editMessageReplyMarkup({
+          reply_markup: markup.inlineKeyboard(keybs),
+        })
+        .catch(() => {});
       Cache.set(`conf_change_${streamId}`, true);
       Cache.set(`stream_tune_${streamId}`, act);
       Database.edit("user", "id", chatID, "stream_tune", act);
@@ -828,10 +918,12 @@ export class CallbackQuery {
       const streamId = match[2];
       const streamKey = Cache.get(`stream_key_${streamId}`);
       if (!streamKey) {
-        ctx.answerCallbackQuery({
-          text: t("en", "stream_key_not_found_message"),
-          show_alert: true,
-        });
+        ctx
+          .answerCallbackQuery({
+            text: t("en", "stream_key_not_found_message"),
+            show_alert: true,
+          })
+          .catch(() => {});
         ctx.deleteMessage().catch(() => {});
         return;
       }
@@ -864,9 +956,11 @@ export class CallbackQuery {
         btn.text(t("en", "return_button"), `stream_return_${streamId}`),
       ]);
 
-      ctx.editMessageReplyMarkup({
-        reply_markup: markup.inlineKeyboard(keybs),
-      });
+      ctx
+        .editMessageReplyMarkup({
+          reply_markup: markup.inlineKeyboard(keybs),
+        })
+        .catch(() => {});
       Cache.set(`conf_change_${streamId}`, true);
       Cache.set(`stream_preset_${streamId}`, act);
       Database.edit("user", "id", chatID, "stream_preset", act);
@@ -878,10 +972,12 @@ export class CallbackQuery {
       const streamId = match[2];
       const streamKey = Cache.get(`stream_key_${streamId}`);
       if (!streamKey) {
-        ctx.answerCallbackQuery({
-          text: t("en", "stream_key_not_found_message"),
-          show_alert: true,
-        });
+        ctx
+          .answerCallbackQuery({
+            text: t("en", "stream_key_not_found_message"),
+            show_alert: true,
+          })
+          .catch(() => {});
         ctx.deleteMessage().catch(() => {});
         return;
       }
@@ -896,9 +992,11 @@ export class CallbackQuery {
         btn.text(t("en", "return_button"), `stream_return_${streamId}`),
       ];
 
-      ctx.editMessageReplyMarkup({
-        reply_markup: markup.inlineKeyboard(keybs),
-      });
+      ctx
+        .editMessageReplyMarkup({
+          reply_markup: markup.inlineKeyboard(keybs),
+        })
+        .catch(() => {});
       Cache.set(`conf_change_${streamId}`, true);
       Cache.set(`stream_fps_${streamId}`, act);
       Database.edit("user", "id", chatID, "stream_fps", act);
@@ -910,10 +1008,12 @@ export class CallbackQuery {
       const streamId = match[2];
       const streamKey = Cache.get(`stream_key_${streamId}`);
       if (!streamKey) {
-        ctx.answerCallbackQuery({
-          text: t("en", "stream_key_not_found_message"),
-          show_alert: true,
-        });
+        ctx
+          .answerCallbackQuery({
+            text: t("en", "stream_key_not_found_message"),
+            show_alert: true,
+          })
+          .catch(() => {});
         ctx.deleteMessage().catch(() => {});
         return;
       }
@@ -921,7 +1021,7 @@ export class CallbackQuery {
       const getBitrateA = String(
         Cache.get(`stream_bitratea_${streamId}`) ?? "128k",
       );
-      if (getBitrateA === act) return ctx.answerCallbackQuery();
+      if (getBitrateA === act) return ctx.answerCallbackQuery().catch(() => {});
       var keybs = [];
       keybs[0] = [
         btn.text(`96k ${act === "96k" ? "✅" : ""}`, `bitrate_96_${streamId}`),
@@ -934,9 +1034,11 @@ export class CallbackQuery {
         btn.text(t("en", "return_button"), `stream_return_${streamId}`),
       ];
 
-      ctx.editMessageReplyMarkup({
-        reply_markup: markup.inlineKeyboard(keybs),
-      });
+      ctx
+        .editMessageReplyMarkup({
+          reply_markup: markup.inlineKeyboard(keybs),
+        })
+        .catch(() => {});
       Cache.set(`stream_bitratea_${streamId}`, act);
       Database.edit("user", "id", chatID, "stream_bitratea", act);
       return;
@@ -948,10 +1050,12 @@ export class CallbackQuery {
       const streamId = match[3];
       const streamKey = Cache.get(`stream_key_${streamId}`);
       if (!streamKey) {
-        ctx.answerCallbackQuery({
-          text: t("en", "stream_key_not_found_message"),
-          show_alert: true,
-        });
+        ctx
+          .answerCallbackQuery({
+            text: t("en", "stream_key_not_found_message"),
+            show_alert: true,
+          })
+          .catch(() => {});
         ctx.deleteMessage().catch(() => {});
         return;
       }
@@ -978,9 +1082,11 @@ export class CallbackQuery {
         btn.text(t("en", "return_button"), `stream_return_${streamId}`),
       ]);
 
-      ctx.editMessageReplyMarkup({
-        reply_markup: markup.inlineKeyboard(keybs),
-      });
+      ctx
+        .editMessageReplyMarkup({
+          reply_markup: markup.inlineKeyboard(keybs),
+        })
+        .catch(() => {});
       Cache.set(`conf_change_${streamId}`, true);
       Cache.set(`stream_${type}_codec_${streamId}`, act);
       Database.edit("user", "id", chatID, `stream_${type}_codec`, act);
@@ -992,10 +1098,12 @@ export class CallbackQuery {
       const streamId = match[2];
       const streamKey = Cache.get(`stream_key_${streamId}`);
       if (!streamKey) {
-        ctx.answerCallbackQuery({
-          text: t("en", "stream_key_not_found_message"),
-          show_alert: true,
-        });
+        ctx
+          .answerCallbackQuery({
+            text: t("en", "stream_key_not_found_message"),
+            show_alert: true,
+          })
+          .catch(() => {});
         ctx.deleteMessage().catch(() => {});
         return;
       }
@@ -1003,7 +1111,8 @@ export class CallbackQuery {
       const getSampleRate = String(
         Cache.get(`stream_sample_rate_${streamId}`) ?? "48000",
       );
-      if (getSampleRate === act) return ctx.answerCallbackQuery();
+      if (getSampleRate === act)
+        return ctx.answerCallbackQuery().catch(() => {});
       var keybs = [];
       keybs[0] = [
         btn.text(
@@ -1019,9 +1128,11 @@ export class CallbackQuery {
         btn.text(t("en", "return_button"), `stream_return_${streamId}`),
       ];
 
-      ctx.editMessageReplyMarkup({
-        reply_markup: markup.inlineKeyboard(keybs),
-      });
+      ctx
+        .editMessageReplyMarkup({
+          reply_markup: markup.inlineKeyboard(keybs),
+        })
+        .catch(() => {});
       Cache.set(`conf_change_${streamId}`, true);
       Cache.set(`stream_sample_rate_${streamId}`, act);
       Database.edit("user", "id", chatID, "stream_sample_rate", act);

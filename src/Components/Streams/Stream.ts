@@ -413,13 +413,15 @@ export class Streams {
             bot?.api
               .deleteMessage(String(chatId), Number(message_id))
               .catch(() => {});
-            bot?.api.sendMessage(
-              String(chatId),
-              t("en", "fatal_stream_error_message"),
-              {
-                parse_mode: "HTML",
-              },
-            );
+            bot?.api
+              .sendMessage(
+                String(chatId),
+                t("en", "fatal_stream_error_message"),
+                {
+                  parse_mode: "HTML",
+                },
+              )
+              .catch(() => {});
             StreamHelper.removeProperty(streamId);
           }
         });
@@ -466,7 +468,8 @@ export class Streams {
             })
             .then((message_result) => {
               Cache.set(`abort_msg_id_${streamId}`, message_result.message_id);
-            });
+            })
+            .catch(() => {});
         }, 20000);
         Cache.set(`timeout_infos_${streamId}`, ts);
 
@@ -526,15 +529,17 @@ export class Streams {
                 },
               )
               .catch(() => {
-                bot?.api.sendMessage(
-                  String(chatId),
-                  t("en", "fatal_stream_error_message"),
-                  {
-                    parse_mode: "HTML",
-                    link_preview_options: { is_disabled: true },
-                    reply_markup: markup.inlineKeyboard(keyb),
-                  },
-                );
+                bot?.api
+                  .sendMessage(
+                    String(chatId),
+                    t("en", "fatal_stream_error_message"),
+                    {
+                      parse_mode: "HTML",
+                      link_preview_options: { is_disabled: true },
+                      reply_markup: markup.inlineKeyboard(keyb),
+                    },
+                  )
+                  .catch(() => {});
               });
           }
 
@@ -591,7 +596,8 @@ export class Streams {
                       Number(result_message.message_id),
                     )
                     .catch(() => {});
-                });
+                })
+                .catch(() => {});
               return;
             }
 
@@ -600,14 +606,16 @@ export class Streams {
 
             Cache.set(`blocks_${streamId}`, true);
             StreamHelper.removeProperty(streamId);
-            bot?.api.editMessageText(
-              String(chatId),
-              Number(message_id),
-              t("en", "stream_error_with_reason_message", {
-                error: detectedError.trim(),
-              }),
-              { parse_mode: "HTML" },
-            );
+            bot?.api
+              .editMessageText(
+                String(chatId),
+                Number(message_id),
+                t("en", "stream_error_with_reason_message", {
+                  error: detectedError.trim(),
+                }),
+                { parse_mode: "HTML" },
+              )
+              .catch(() => {});
             return;
           }
 
@@ -632,7 +640,7 @@ export class Streams {
               bot?.api.deleteMessage(
                 String(chatId),
                 Number(Cache.get(`abort_msg_id_${streamId}`)),
-              );
+              ).catch(() => {});
               Cache.del(`abort_msg_id_${streamId}`);
             }
             const ffmpegLog = Helper.parseFFmpegLog(data);
@@ -675,7 +683,7 @@ export class Streams {
                         )
                         .catch(() => {});
                     }, 1000);
-                  });
+                  }).catch(() => {});
               }
             }
 
@@ -764,7 +772,7 @@ export class Streams {
                       : true,
                     source[2],
                   );
-                });
+                }).catch(() => {});
               return;
             }
 
@@ -814,7 +822,7 @@ export class Streams {
                 {
                   parse_mode: "HTML",
                 },
-              );
+              ).catch(() => {});
             } else {
               bot?.api.sendMessage(
                 String(chatId),
@@ -822,7 +830,7 @@ export class Streams {
                 {
                   parse_mode: "HTML",
                 },
-              );
+              ).catch(() => {});
             }
             Cache.del(`stream_position_${sourceId}_${streamId}`);
             bot?.api

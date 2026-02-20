@@ -33,11 +33,8 @@ bot.start({
 console.log(`BOT STARTED`);
 
 new Elysia({ adapter: node() })
-  .get("/", ({ set }) => {
-    set.status = 200;
-    return {
-      ok: true,
-    };
+  .get("/", ({ status }) => {
+    return status(200, { ok: true, code: 200, message: "Hi!" });
   })
   .listen(port, ({ port }) => {
     console.log(`Listening on ${port} port.`);

@@ -21,9 +21,11 @@ export class StreamHelper {
           parse_mode: "HTML",
         })
         .catch(() => {
-          bot?.api.sendMessage(String(chatId), t("en", msg), {
-            parse_mode: "HTML",
-          });
+          bot?.api
+            .sendMessage(String(chatId), t("en", msg), {
+              parse_mode: "HTML",
+            })
+            .catch(() => {});
         });
       return;
     }

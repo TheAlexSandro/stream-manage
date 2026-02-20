@@ -554,7 +554,8 @@ export class Messages {
           .reply(t("en", "checkyt_message"))
           .then((message_result) => {
             Helper.isLive(text, (err, isLive) => {
-              if (err)
+              if (err) {
+                console.log(err);
                 return bot.api
                   .editMessageText(
                     chatID,
@@ -563,6 +564,7 @@ export class Messages {
                     { parse_mode: "HTML" },
                   )
                   .catch(() => {});
+              }
 
               const source = ctx.message?.video
                 ? ctx.message?.video.file_id

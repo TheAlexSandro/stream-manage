@@ -20,6 +20,6 @@ COPY --from=builder /app/node_modules ./node_modules
 
 COPY --from=builder /app/Assets ./Assets
 
-CMD ["node", "dist/index.js"]
-
 EXPOSE 8000
+
+CMD ["node", "dist/index.js"]

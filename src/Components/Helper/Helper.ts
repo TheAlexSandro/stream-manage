@@ -129,7 +129,7 @@ export class Helper {
       "--print",
       "is_live",
       "--no-warnings",
-      "--cokies",
+      "--cookies",
       path.join(process.cwd(), "cookies.txt"),
       url,
     ]);

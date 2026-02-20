@@ -555,6 +555,7 @@ export class Messages {
           .then((message_result) => {
             Helper.isLive(text, (err, isLive) => {
               if (err) {
+                console.log(err);
                 return bot.api
                   .editMessageText(
                     chatID,

@@ -494,6 +494,7 @@ export class Streams {
             Cache.set(`stream_position_${sourceId}_${streamId}`, absoluteSec);
           }
 
+          console.log(data);
           const fatalErrors = [
             "Connection reset by peer",
             "Broken pipe",
@@ -637,10 +638,12 @@ export class Streams {
             !Cache.get(`has_sent_conf_${streamId}`)
           ) {
             if (Cache.get(`abort_msg_id_${streamId}`)) {
-              bot?.api.deleteMessage(
-                String(chatId),
-                Number(Cache.get(`abort_msg_id_${streamId}`)),
-              ).catch(() => {});
+              bot?.api
+                .deleteMessage(
+                  String(chatId),
+                  Number(Cache.get(`abort_msg_id_${streamId}`)),
+                )
+                .catch(() => {});
               Cache.del(`abort_msg_id_${streamId}`);
             }
             const ffmpegLog = Helper.parseFFmpegLog(data);
@@ -683,7 +686,8 @@ export class Streams {
                         )
                         .catch(() => {});
                     }, 1000);
-                  }).catch(() => {});
+                  })
+                  .catch(() => {});
               }
             }
 
@@ -772,7 +776,8 @@ export class Streams {
                       : true,
                     source[2],
                   );
-                }).catch(() => {});
+                })
+                .catch(() => {});
               return;
             }
 
@@ -816,21 +821,21 @@ export class Streams {
             return;
           } else {
             if (code === 0) {
-              bot?.api.sendMessage(
-                String(chatId),
-                t("en", "stream_done_message"),
-                {
+              bot?.api
+                .sendMessage(String(chatId), t("en", "stream_done_message"), {
                   parse_mode: "HTML",
-                },
-              ).catch(() => {});
+                })
+                .catch(() => {});
             } else {
-              bot?.api.sendMessage(
-                String(chatId),
-                t("en", "stream_done_err_message"),
-                {
-                  parse_mode: "HTML",
-                },
-              ).catch(() => {});
+              bot?.api
+                .sendMessage(
+                  String(chatId),
+                  t("en", "stream_done_err_message"),
+                  {
+                    parse_mode: "HTML",
+                  },
+                )
+                .catch(() => {});
             }
             Cache.del(`stream_position_${sourceId}_${streamId}`);
             bot?.api

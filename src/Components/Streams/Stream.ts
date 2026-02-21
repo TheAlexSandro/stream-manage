@@ -404,7 +404,7 @@ export class Streams {
 
         Cache.set(`controller_${streamId}`, controller);
         const ffmpegArgs = this.generateFFmpegArgs(myConfig);
-        const ffmpeg = spawn(String(ffmpegPath), ffmpegArgs, { signal });
+        const ffmpeg = spawn("ffmpeg", ffmpegArgs, { signal });
 
         ffmpeg.on("error", (err: any) => {
           if (err.code === "ABORT_ERR" || err.name === "AbortError") return;

@@ -7,7 +7,6 @@ import { CallbackQuery } from "./Handlers/CallbackQuery";
 import { Elysia } from "elysia";
 import { node } from "@elysiajs/node";
 import fs from "fs";
-import ffmpegPath from "ffmpeg-static";
 
 const bot = new Bot(process.env["BOT_TOKEN"]!);
 const port = Number(process.env["PORT"] || 8000);
@@ -29,7 +28,6 @@ bot.on("callback_query", (ctx: NonNullable<Context>) => {
 // }
 
 console.log(fs.readFileSync("cookies.txt", "utf8"));
-console.log(ffmpegPath);
 
 bot.start({
   drop_pending_updates: true,

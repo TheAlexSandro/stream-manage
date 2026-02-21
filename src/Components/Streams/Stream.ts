@@ -1,4 +1,3 @@
-import ffmpegPath from "ffmpeg-static";
 import { Cache } from "../Caches/Cache";
 import { spawn, ChildProcess } from "node:child_process";
 import { Bot } from "grammy";

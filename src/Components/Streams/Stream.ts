@@ -132,11 +132,32 @@ export class Streams {
       );
     }
 
-    const args = [
-      "-re",
-      "-protocol_whitelist",
-      "file,http,https,tcp,tls,crypto,pipe",
-    ];
+    const args: string[] = [];
+
+    if (isYT) {
+      args.push(
+        "-fflags",
+        "+genpts+discardcorrupt",
+        "-use_wallclock_as_timestamps",
+        "1",
+        "-thread_queue_size",
+        "1024",
+        "-analyzeduration",
+        "0",
+        "-probesize",
+        "32k",
+        "-flags",
+        "low_delay",
+        "-protocol_whitelist",
+        "file,http,https,tcp,tls,crypto,pipe",
+      );
+    } else {
+      args.push(
+        "-re",
+        "-protocol_whitelist",
+        "file,http,https,tcp,tls,crypto,pipe",
+      );
+    }
 
     if (isImage) {
       args.push(

@@ -20,6 +20,6 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/cookies.txt ./cookies.txt
 COPY --from=builder /app/Assets ./Assets
 
-EXPOSE 8000
+EXPOSE 3000
 
-CMD sh -c 'echo "$COOKIES_CONTENT" | base64 -d > cookies.txt && node dist/index.js'
+CMD sh -c 'node dist/index.js'

@@ -117,10 +117,7 @@ export class Streams {
 
     const isImage = /\.(jpg|jpeg|png)$/i.test(source);
 
-    let filters = [];
-    if (!isYT) {
-      filters.push(`scale=-2:720`);
-    }
+    let filters = [`scale=-2:720`];
     if (playbackSpeed !== 1) {
       filters.push(`setpts=${(1 / playbackSpeed).toFixed(6)}*PTS`);
     }
@@ -228,65 +225,38 @@ export class Streams {
       args.push("-map", "0:a?");
     }
 
-    if (isYT) {
-      args.push(
-        "-r",
-        fps.toString(),
-        "-vf",
-        "setpts=PTS-STARTPTS,scale=-2:480,format=yuv420p",
-        "-c:v",
-        "libx264",
-        "-preset",
-        "ultrafast",
-        "-b:v",
-        "800k",
-        "-maxrate",
-        "800k",
-        "-bufsize",
-        "1600k",
-        "-c:a",
-        audioCodec,
-        "-b:a",
-        bitrateA,
-        "-ar",
-        sampleRate.toString(),
-        "-af",
-        "aresample=async=1,asetpts=PTS-STARTPTS",
-      );
-    } else {
-      args.push(
-        "-r",
-        fps.toString(),
-        "-c:v",
-        videoCodec,
-        "-preset",
-        preset,
-        "-b:v",
-        bitrateStr,
-        "-maxrate",
-        maxRate,
-        "-minrate",
-        bitrateStr,
-        "-bufsize",
-        bufSize,
-        "-pix_fmt",
-        "yuv420p",
-        "-g",
-        gopValue.toString(),
-        "-keyint_min",
-        gopValue.toString(),
-        "-sc_threshold",
-        "0",
-        "-tune",
-        isImage ? "stillimage" : tune,
-        "-c:a",
-        audioCodec,
-        "-b:a",
-        bitrateA,
-        "-ar",
-        sampleRate.toString(),
-      );
-    }
+    args.push(
+      "-r",
+      fps.toString(),
+      "-c:v",
+      videoCodec,
+      "-preset",
+      preset,
+      "-b:v",
+      bitrateStr,
+      "-maxrate",
+      maxRate,
+      "-minrate",
+      bitrateStr,
+      "-bufsize",
+      bufSize,
+      "-pix_fmt",
+      "yuv420p",
+      "-g",
+      gopValue.toString(),
+      "-keyint_min",
+      gopValue.toString(),
+      "-sc_threshold",
+      "0",
+      "-tune",
+      isImage ? "stillimage" : tune,
+      "-c:a",
+      audioCodec,
+      "-b:a",
+      bitrateA,
+      "-ar",
+      sampleRate.toString(),
+    );
 
     let afParts = [];
     if (playbackSpeed && playbackSpeed !== 1) {

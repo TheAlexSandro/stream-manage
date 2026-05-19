@@ -225,11 +225,15 @@ export class Streams {
       args.push("-map", "0:a?");
     }
 
+    args.push("-r", fps.toString());
+
+    if (isYT) {
+      args.push("-c:v", "copy", "-c:a", "copy");
+    } else {
+      args.push("-c:v", videoCodec);
+    }
+
     args.push(
-      "-r",
-      fps.toString(),
-      "-c:v",
-      videoCodec,
       "-preset",
       preset,
       "-b:v",

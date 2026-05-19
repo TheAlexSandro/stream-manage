@@ -117,12 +117,15 @@ export class Streams {
 
     const isImage = /\.(jpg|jpeg|png)$/i.test(source);
 
-    let filters = [`scale=-2:720`];
+    let filters = [];
+    if (!isYT) {
+      filters.push(`scale=-2:720`);
+    }
     if (playbackSpeed !== 1) {
       filters.push(`setpts=${(1 / playbackSpeed).toFixed(6)}*PTS`);
     }
 
-    if (watermarkText) {
+    if (watermarkText && !isYT) {
       const fontPath = path
         .join(process.cwd(), "Assets", "roboto.ttf")
         .replace(/\\/g, "/")
@@ -213,8 +216,8 @@ export class Streams {
 
       args.push("-filter_complex", filterComplex, "-map", "[outv]");
     } else {
-      args.push("-vf", `${filters.join(",")},format=yuv420p`);
       if (!isYT) {
+        args.push("-vf", `${filters.join(",")},format=yuv420p`);
         args.push("-map", "0:v:0");
       }
     }
@@ -230,22 +233,27 @@ export class Streams {
     if (isYT) {
       args.push("-c:v", "copy", "-c:a", "copy");
     } else {
-      args.push("-c:v", videoCodec);
+      args.push(
+        "-c:v",
+        videoCodec,
+        "-preset",
+        preset,
+        "-b:v",
+        bitrateStr,
+        "-maxrate",
+        maxRate,
+        "-minrate",
+        bitrateStr,
+        "-bufsize",
+        bufSize,
+      );
+    }
+
+    if (!isYT) {
+      args.push("-pix_fmt", "yuv420p");
     }
 
     args.push(
-      "-preset",
-      preset,
-      "-b:v",
-      bitrateStr,
-      "-maxrate",
-      maxRate,
-      "-minrate",
-      bitrateStr,
-      "-bufsize",
-      bufSize,
-      "-pix_fmt",
-      "yuv420p",
       "-g",
       gopValue.toString(),
       "-keyint_min",
@@ -285,7 +293,7 @@ export class Streams {
       args.push("-af", afParts.join(","));
     }
 
-    args.push("-f", "flv", streamKey);
+    args.push("-f", "flv", "-flvflags", "no_duration_filesize", streamKey);
     return args;
   }
 

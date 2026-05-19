@@ -216,8 +216,8 @@ export class Streams {
 
       args.push("-filter_complex", filterComplex, "-map", "[outv]");
     } else {
-      args.push("-vf", `${filters.join(",")},format=yuv420p`);
       if (!isYT) {
+        args.push("-vf", `${filters.join(",")},format=yuv420p`);
         args.push("-map", "0:v:0");
       }
     }

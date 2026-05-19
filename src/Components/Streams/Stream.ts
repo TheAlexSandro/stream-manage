@@ -126,7 +126,7 @@ export class Streams {
       filters.push(`setpts=${(1 / playbackSpeed).toFixed(6)}*PTS`);
     }
 
-    if (watermarkText && !isYT) {
+    if (watermarkText) {
       const fontPath = path
         .join(process.cwd(), "Assets", "roboto.ttf")
         .replace(/\\/g, "/")
@@ -142,12 +142,16 @@ export class Streams {
       args.push(
         "-fflags",
         "+genpts+discardcorrupt",
+        "-use_wallclock_as_timestamps",
+        "1",
         "-thread_queue_size",
-        "4096",
+        "2048",
         "-analyzeduration",
-        "5M",
+        "2M",
         "-probesize",
-        "5M",
+        "2M",
+        "-flags",
+        "low_delay",
         "-protocol_whitelist",
         "file,http,https,tcp,tls,crypto,pipe",
       );
@@ -213,16 +217,16 @@ export class Streams {
 
       args.push("-filter_complex", filterComplex, "-map", "[outv]");
     } else {
-      // Apply video filter and map for both YT and non-YT sources
       args.push("-vf", `${filters.join(",")},format=yuv420p`);
-      args.push("-map", "0:v:0");
+      if (!isYT) {
+        args.push("-map", "0:v:0");
+      }
     }
 
     if (isImage) {
       args.push("-map", "1:a:0");
-    } else {
-      // Map audio for both YT and non-YT sources
-      args.push("-map", "0:a:0");
+    } else if (!isImage && !isYT) {
+      args.push("-map", "0:a?");
     }
 
     args.push(
@@ -256,7 +260,6 @@ export class Streams {
       bitrateA,
       "-ar",
       sampleRate.toString(),
-      ...(isYT ? ["-async", "1"] : []),
     );
 
     let afParts = [];

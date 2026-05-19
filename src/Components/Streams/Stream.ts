@@ -117,12 +117,15 @@ export class Streams {
 
     const isImage = /\.(jpg|jpeg|png)$/i.test(source);
 
-    let filters = [`scale=-2:720`];
+    let filters = [];
+    if (!isYT) {
+      filters.push(`scale=-2:720`);
+    }
     if (playbackSpeed !== 1) {
       filters.push(`setpts=${(1 / playbackSpeed).toFixed(6)}*PTS`);
     }
 
-    if (watermarkText) {
+    if (watermarkText && !isYT) {
       const fontPath = path
         .join(process.cwd(), "Assets", "roboto.ttf")
         .replace(/\\/g, "/")

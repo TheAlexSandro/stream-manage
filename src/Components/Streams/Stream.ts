@@ -234,7 +234,16 @@ export class Streams {
     args.push("-r", fps.toString());
 
     if (isYT) {
-      args.push("-c:v", "copy", "-c:a", "copy");
+      args.push(
+        "-c:v",
+        "copy",
+        "-c:a",
+        audioCodec,
+        "-b:a",
+        bitrateA,
+        "-ar",
+        sampleRate.toString(),
+      );
     } else {
       args.push(
         "-c:v",
@@ -249,29 +258,27 @@ export class Streams {
         bitrateStr,
         "-bufsize",
         bufSize,
+        "-pix_fmt",
+        "yuv420p",
+      );
+
+      args.push(
+        "-g",
+        gopValue.toString(),
+        "-keyint_min",
+        gopValue.toString(),
+        "-sc_threshold",
+        "0",
+        "-tune",
+        isImage ? "stillimage" : tune,
+        "-c:a",
+        audioCodec,
+        "-b:a",
+        bitrateA,
+        "-ar",
+        sampleRate.toString(),
       );
     }
-
-    if (!isYT) {
-      args.push("-pix_fmt", "yuv420p");
-    }
-
-    args.push(
-      "-g",
-      gopValue.toString(),
-      "-keyint_min",
-      gopValue.toString(),
-      "-sc_threshold",
-      "0",
-      "-tune",
-      isImage ? "stillimage" : tune,
-      "-c:a",
-      audioCodec,
-      "-b:a",
-      bitrateA,
-      "-ar",
-      sampleRate.toString(),
-    );
 
     let afParts = [];
     if (playbackSpeed && playbackSpeed !== 1) {
@@ -439,6 +446,7 @@ export class Streams {
 
         Cache.set(`controller_${streamId}`, controller);
         const ffmpegArgs = this.generateFFmpegArgs(myConfig);
+        console.log("ffmpeg args:", ffmpegArgs.join(" "));
         const ffmpeg = spawn("ffmpeg", ffmpegArgs, { signal });
 
         ffmpeg.on("error", (err: any) => {
@@ -537,7 +545,7 @@ export class Streams {
             Cache.set(`stream_position_${sourceId}_${streamId}`, absoluteSec);
           }
 
-          console.log(data);
+          //console.log(data);
           const fatalErrors = [
             "Connection reset by peer",
             "Broken pipe",

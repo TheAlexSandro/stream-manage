@@ -117,15 +117,12 @@ export class Streams {
 
     const isImage = /\.(jpg|jpeg|png)$/i.test(source);
 
-    let filters = [];
-    if (!isYT) {
-      filters.push(`scale=-2:720`);
-    }
+    let filters = [`scale=-2:720`];
     if (playbackSpeed !== 1) {
       filters.push(`setpts=${(1 / playbackSpeed).toFixed(6)}*PTS`);
     }
 
-    if (watermarkText && !isYT) {
+    if (watermarkText) {
       const fontPath = path
         .join(process.cwd(), "Assets", "roboto.ttf")
         .replace(/\\/g, "/")
@@ -216,12 +213,9 @@ export class Streams {
 
       args.push("-filter_complex", filterComplex, "-map", "[outv]");
     } else {
+      args.push("-vf", `${filters.join(",")},format=yuv420p`);
       if (!isYT) {
-        args.push("-vf", `${filters.join(",")},format=yuv420p`);
         args.push("-map", "0:v:0");
-      } else {
-        args.push("-map", "0:v:0");
-        args.push("-map", "0:a:0");
       }
     }
 
@@ -231,54 +225,38 @@ export class Streams {
       args.push("-map", "0:a?");
     }
 
-    args.push("-r", fps.toString());
-
-    if (isYT) {
-      args.push(
-        "-c:v",
-        "copy",
-        "-c:a",
-        audioCodec,
-        "-b:a",
-        bitrateA,
-        "-ar",
-        sampleRate.toString(),
-      );
-    } else {
-      args.push(
-        "-c:v",
-        videoCodec,
-        "-preset",
-        preset,
-        "-b:v",
-        bitrateStr,
-        "-maxrate",
-        maxRate,
-        "-minrate",
-        bitrateStr,
-        "-bufsize",
-        bufSize,
-        "-pix_fmt",
-        "yuv420p",
-      );
-
-      args.push(
-        "-g",
-        gopValue.toString(),
-        "-keyint_min",
-        gopValue.toString(),
-        "-sc_threshold",
-        "0",
-        "-tune",
-        isImage ? "stillimage" : tune,
-        "-c:a",
-        audioCodec,
-        "-b:a",
-        bitrateA,
-        "-ar",
-        sampleRate.toString(),
-      );
-    }
+    args.push(
+      "-r",
+      fps.toString(),
+      "-c:v",
+      videoCodec,
+      "-preset",
+      preset,
+      "-b:v",
+      bitrateStr,
+      "-maxrate",
+      maxRate,
+      "-minrate",
+      bitrateStr,
+      "-bufsize",
+      bufSize,
+      "-pix_fmt",
+      "yuv420p",
+      "-g",
+      gopValue.toString(),
+      "-keyint_min",
+      gopValue.toString(),
+      "-sc_threshold",
+      "0",
+      "-tune",
+      isImage ? "stillimage" : tune,
+      "-c:a",
+      audioCodec,
+      "-b:a",
+      bitrateA,
+      "-ar",
+      sampleRate.toString(),
+    );
 
     let afParts = [];
     if (playbackSpeed && playbackSpeed !== 1) {
@@ -303,7 +281,7 @@ export class Streams {
       args.push("-af", afParts.join(","));
     }
 
-    args.push("-f", "flv", "-flvflags", "no_duration_filesize", streamKey);
+    args.push("-f", "flv", streamKey);
     return args;
   }
 
@@ -446,7 +424,6 @@ export class Streams {
 
         Cache.set(`controller_${streamId}`, controller);
         const ffmpegArgs = this.generateFFmpegArgs(myConfig);
-        console.log("ffmpeg args:", ffmpegArgs.join(" "));
         const ffmpeg = spawn("ffmpeg", ffmpegArgs, { signal });
 
         ffmpeg.on("error", (err: any) => {
@@ -545,7 +522,7 @@ export class Streams {
             Cache.set(`stream_position_${sourceId}_${streamId}`, absoluteSec);
           }
 
-          //console.log(data);
+          console.log(data);
           const fatalErrors = [
             "Connection reset by peer",
             "Broken pipe",

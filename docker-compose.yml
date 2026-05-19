@@ -8,4 +8,3 @@ services:
     volumes:
       - ./cookies.txt:/app/cookies.txt:ro
       - ./Assets:/app/Assets:ro
-      - "3000:3000"

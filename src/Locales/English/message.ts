@@ -27,7 +27,7 @@ export default {
   on_stream_error_message:
     "❌ <b>Error Caught!</b>\nThere's something went wrong while sending the stream data, stream continues...",
   fatal_stream_error_message:
-    "🚨 <b>Fatal Error Detected!</b>\nA fatal error has occurred, the stream has been stopped. Please check your media source or server url and server key, also check the file permissions and path.\n\nOr some of your configuration does not compatible with other options, please check https://ffmpeg.org/ffmpeg.html#Options for more information.",
+    "🚨 <b>Fatal Error Detected!</b>\nA fatal error has occurred, the stream has been stopped. Please check your media source or server url and server key, also check the file permissions and path.",
   server_slow_warn_message:
     "⚠️ <b>Warning!</b>\nThe server is experiencing excessive workload, the stream may be interrupted.",
   stream_done_message:

@@ -458,10 +458,16 @@ export class CallbackQuery {
                 .deleteMessage(chatID, Number(Cache.get(`restart_${streamId}`)))
                 .catch(() => {});
               Cache.set(`restart_${streamId}`, cb!.message!.message_id);
+              bot.api
+                .deleteMessage(chatID, Number(Cache.get(`id_conf_ch_${streamId}`)))
+                .catch(() => {});
               ctx
                 .reply(t("en", "change_detect_message"), {
                   parse_mode: "HTML",
                   reply_markup: markup.inlineKeyboard(keybs),
+                })
+                .then((msg) => {
+                  Cache.set(`id_conf_ch_${streamId}`, msg.message_id);
                 })
                 .catch(() => {});
             }

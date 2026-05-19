@@ -48,29 +48,49 @@ export class Streams {
 
       const args = [];
 
-      if (isContinue) {
-        args.push("--ss", lastSavedSec);
-      }
-
       args.push(
         "-f",
-        "bv*+ba/b",
+        "91/92/93/94/95/best",
+        "--get-url",
+        "--no-warnings",
         "--js-runtime",
         "node",
         "--cookies",
         path.join(process.cwd(), "cookies.txt"),
-        "--no-part",
         "--no-playlist",
-        "-o",
-        "-",
         String(source),
       );
 
-      const proc = spawn("yt-dlp", args, { signal });
+      const proc = spawn("yt-dlp", args, {
+        signal,
+        stdio: ["ignore", "pipe", "pipe"],
+      });
 
-      setTimeout(() => {
-        return callback(null, proc as ChildProcess);
-      }, 2000);
+      let directUrl = "";
+
+      proc.stdout?.on("data", (d) => {
+        console.log("yt-dlp stderr:", String(d));
+        directUrl += String(d);
+      });
+
+      proc.stderr?.on("data", (d) => {
+        console.log("yt-dlp stderr:", String(d));
+      });
+
+      proc.stdout?.on("end", () => {
+        const urls = directUrl.trim().split("\n").filter(Boolean);
+        console.log("URLs from yt-dlp:", urls);
+
+        if (urls.length === 0 || !urls[0]) {
+          return callback("yt-dlp returned no URL", null);
+        }
+
+        return callback(null, urls[0]);
+      });
+
+      proc.on("error", (err) => {
+        return callback(err.message, null);
+      });
     } else if (isUrl) {
       return callback(null, source as string);
     } else {
@@ -118,7 +138,7 @@ export class Streams {
     const isImage = /\.(jpg|jpeg|png)$/i.test(source);
 
     let filters = [`scale=-2:720`];
-    if (playbackSpeed !== 1) {
+    if (playbackSpeed && playbackSpeed !== 1) {
       filters.push(`setpts=${(1 / playbackSpeed).toFixed(6)}*PTS`);
     }
 
@@ -138,18 +158,14 @@ export class Streams {
       args.push(
         "-fflags",
         "+genpts+discardcorrupt",
-        "-use_wallclock_as_timestamps",
-        "1",
-        "-thread_queue_size",
-        "2048",
-        "-analyzeduration",
-        "2M",
-        "-probesize",
-        "2M",
-        "-flags",
-        "low_delay",
         "-protocol_whitelist",
-        "file,http,https,tcp,tls,crypto,pipe",
+        "file,http,https,tcp,tls,crypto,hls,applehttp",
+        "-reconnect",
+        "1",
+        "-reconnect_streamed",
+        "1",
+        "-reconnect_delay_max",
+        "5",
       );
     } else {
       args.push(
@@ -189,11 +205,7 @@ export class Streams {
       }
     }
 
-    if (!isYT) {
-      args.push("-i", source);
-    } else {
-      args.push("-i", "pipe:0");
-    }
+    args.push("-i", source);
 
     if (isImage) {
       args.push(
@@ -259,6 +271,11 @@ export class Streams {
     );
 
     let afParts = [];
+
+    if (isYT) {
+      afParts.push("aresample=async=1000");
+    }
+
     if (playbackSpeed && playbackSpeed !== 1) {
       let remainingSpeed = playbackSpeed;
 
@@ -296,6 +313,7 @@ export class Streams {
     isPaused?: boolean,
     sourceId?: string,
   ) {
+    console.log(streamKey, used_source);
     Cache.set(`starting_${streamId}`, true);
     const isYT = Helper.isYT(String(used_source));
     bot?.api
@@ -379,7 +397,7 @@ export class Streams {
               Cache.get(`stream_sample_rate_${streamId}`) ?? 48000,
             ) as 44100 | 48000,
             playbackSpeed: Helper.permsYt(streamId).includes("speed")
-              ? 0
+              ? 1
               : Number(Cache.get(`stream_playback_speed_${streamId}`) ?? 1),
             watermarkText: String(
               Cache.get(`stream_textwm_${streamId}`) ??
@@ -424,91 +442,11 @@ export class Streams {
 
         Cache.set(`controller_${streamId}`, controller);
         const ffmpegArgs = this.generateFFmpegArgs(myConfig);
-        const ffmpeg = spawn("ffmpeg", ffmpegArgs, { signal });
-
-        ffmpeg.on("error", (err: any) => {
-          if (err.code === "ABORT_ERR" || err.name === "AbortError") return;
-          if (Cache.get(`silent_${streamId}`)) return;
-          if (Cache.get(`stops_${streamId}`)) {
-            StreamHelper.closeStream(
-              streamId,
-              bot,
-              String(chatId),
-              Number(message_id),
-            );
-            return;
-          } else {
-            bot?.api
-              .deleteMessage(String(chatId), Number(message_id))
-              .catch(() => {});
-            bot?.api
-              .sendMessage(
-                String(chatId),
-                t("en", "fatal_stream_error_message"),
-                {
-                  parse_mode: "HTML",
-                },
-              )
-              .catch(() => {});
-            StreamHelper.removeProperty(streamId);
-          }
+        const ffmpeg = spawn("ffmpeg", ffmpegArgs, {
+          signal,
+          stdio: ["ignore", "pipe", "pipe"],
         });
-
-        if (source instanceof ChildProcess) {
-          ffmpeg.stdin.on("error", () => {
-            if (Cache.get(`silent_${streamId}`)) return;
-            StreamHelper.closeStream(
-              streamId,
-              bot,
-              String(chatId),
-              Number(message_id),
-            );
-          });
-
-          source.on("error", () => {
-            if (Cache.get(`silent_${streamId}`)) return;
-            StreamHelper.closeStream(
-              streamId,
-              bot,
-              String(chatId),
-              Number(message_id),
-            );
-          });
-
-          source?.stdout?.pipe(ffmpeg.stdin);
-          Cache.set(`source_st_${streamId}`, source);
-        }
-
-        Cache.set(`stream_${streamId}`, ffmpeg);
-        const ts = setTimeout(() => {
-          var keyb = [];
-          keyb = [
-            btn.text(
-              t("en", "abort_stream_buton"),
-              `abort_soft_${streamId}`,
-              "danger",
-            ),
-          ];
-          bot?.api
-            .sendMessage(String(chatId), t("en", "stream_long_message"), {
-              parse_mode: "HTML",
-              reply_markup: markup.inlineKeyboard(keyb),
-            })
-            .then((message_result) => {
-              Cache.set(`abort_msg_id_${streamId}`, message_result.message_id);
-            })
-            .catch(() => {});
-        }, 20000);
-        Cache.set(`timeout_infos_${streamId}`, ts);
-
-        if (!fromPause) {
-          Cache.set(`stream_config_${streamId}`, myConfig);
-          Cache.set(`stream_source_${streamId}`, source);
-        }
-
-        const lastSavedSec = Number(
-          Cache.get(`stream_position_${sourceId}_${streamId}`) || 0,
-        );
+        console.log("ffmpeg args:", ffmpegArgs.join(" "));
 
         ffmpeg.stderr.on("data", (d) => {
           const data = String(d);
@@ -761,6 +699,123 @@ export class Streams {
           }
         });
 
+        ffmpeg.on("error", (err: any) => {
+          if (err.code === "ABORT_ERR" || err.name === "AbortError") return;
+          if (Cache.get(`silent_${streamId}`)) return;
+          if (Cache.get(`stops_${streamId}`)) {
+            StreamHelper.closeStream(
+              streamId,
+              bot,
+              String(chatId),
+              Number(message_id),
+            );
+            return;
+          } else {
+            bot?.api
+              .deleteMessage(String(chatId), Number(message_id))
+              .catch(() => {});
+            bot?.api
+              .sendMessage(
+                String(chatId),
+                t("en", "fatal_stream_error_message"),
+                {
+                  parse_mode: "HTML",
+                },
+              )
+              .catch(() => {});
+            StreamHelper.removeProperty(streamId);
+          }
+        });
+
+        if (source instanceof ChildProcess) {
+          // ffmpeg.stdin.on("error", () => {
+          //   if (Cache.get(`silent_${streamId}`)) return;
+          //   StreamHelper.closeStream(
+          //     streamId,
+          //     bot,
+          //     String(chatId),
+          //     Number(message_id),
+          //   );
+          // });
+
+          source.on("error", () => {
+            if (Cache.get(`silent_${streamId}`)) return;
+            StreamHelper.closeStream(
+              streamId,
+              bot,
+              String(chatId),
+              Number(message_id),
+            );
+          });
+
+          //source?.stdout?.pipe(ffmpeg.stdin);
+          Cache.set(`source_st_${streamId}`, source);
+        }
+
+        // if (source instanceof ChildProcess) {
+        //   console.log("✅ source IS ChildProcess");
+        //   console.log("✅ stdout:", !!source.stdout);
+
+        //   ffmpeg.stdin.on("error", (err) => {
+        //     console.error("❌ ffmpeg stdin error:", err);
+        //   });
+
+        //   source.on("error", (err) => {
+        //     console.error("❌ yt-dlp error:", err);
+        //   });
+
+        //   source.stdout?.on("data", (chunk) => {
+        //     console.log("📦 yt-dlp chunk:", chunk.length, "bytes");
+        //     if (!ffmpeg.stdin.destroyed) {
+        //       ffmpeg.stdin.write(chunk);
+        //     }
+        //   });
+
+        //   source.stdout?.on("end", () => {
+        //     console.log("🔚 yt-dlp stdout ended");
+        //     ffmpeg.stdin.end();
+        //   });
+
+        //   source.stderr?.on("data", (d) => {
+        //     console.log("yt-dlp stderr:", String(d));
+        //   });
+
+        //   Cache.set(`source_st_${streamId}`, source);
+        // } else {
+        //   console.log("❌ source is NOT ChildProcess:", typeof source, source);
+        // }
+
+        Cache.set(`stream_${streamId}`, ffmpeg);
+        const ts = setTimeout(() => {
+          var keyb = [];
+          keyb = [
+            btn.text(
+              t("en", "abort_stream_buton"),
+              `abort_soft_${streamId}`,
+              "danger",
+            ),
+          ];
+          bot?.api
+            .sendMessage(String(chatId), t("en", "stream_long_message"), {
+              parse_mode: "HTML",
+              reply_markup: markup.inlineKeyboard(keyb),
+            })
+            .then((message_result) => {
+              Cache.set(`abort_msg_id_${streamId}`, message_result.message_id);
+            })
+            .catch(() => {});
+        }, 20000);
+        Cache.set(`timeout_infos_${streamId}`, ts);
+
+        if (!fromPause) {
+          Cache.set(`stream_config_${streamId}`, myConfig);
+          Cache.set(`stream_source_${streamId}`, source);
+        }
+
+        const lastSavedSec = Number(
+          Cache.get(`stream_position_${sourceId}_${streamId}`) || 0,
+        );
+
         signal.onabort = () => {
           if (Cache.get(`silent_${streamId}`)) return;
           StreamHelper.closeStream(
@@ -883,19 +938,12 @@ export class Streams {
     if (!getStream) return false;
     Cache.set(`silent_${streamId}`, "changed");
     clearTimeout(Cache.get<NodeJS.Timeout>(`timeout_conf_${streamId}`));
-    if (Helper.isYT(null, streamId)) {
-      const source = Cache.get<ChildProcess>(`source_st_${streamId}`);
-      const controller = Cache.get<AbortController>(`controller_${streamId}`);
-      try {
-        if (getStream.stdin) {
-          source?.stdout?.unpipe(getStream.stdin);
-        }
-        source?.stdout?.destroy();
-        controller!.abort();
-      } catch {}
-      getStream.stdin?.write("q");
-    } else {
-      getStream.stdin?.write("q");
+    const controller = Cache.get<AbortController>(`controller_${streamId}`);
+    try {
+      controller!.abort();
+    } catch {}
+    if (!getStream.killed) {
+      getStream.kill("SIGKILL");
     }
     return;
   }
@@ -905,19 +953,13 @@ export class Streams {
     if (!getStream) return false;
     Cache.set(`silent_${streamId}`, "restart");
     clearTimeout(Cache.get<NodeJS.Timeout>(`timeout_conf_${streamId}`));
-    if (Helper.isYT(null, streamId)) {
-      const source = Cache.get<ChildProcess>(`source_st_${streamId}`);
-      const controller = Cache.get<AbortController>(`controller_${streamId}`);
-      try {
-        if (getStream.stdin) {
-          source?.stdout?.unpipe(getStream.stdin);
-        }
-        source?.stdout?.destroy();
-        controller!.abort();
-      } catch {}
-      getStream.stdin?.write("q");
-    } else {
-      getStream.stdin?.write("q");
+    const controller = Cache.get<AbortController>(`controller_${streamId}`);
+    try {
+      controller!.abort();
+    } catch {}
+    // fallback jika abort tidak bekerja
+    if (!getStream.killed) {
+      getStream.kill("SIGKILL");
     }
     Cache.del(`has_sent_conf_${streamId}`);
     return;
@@ -930,19 +972,12 @@ export class Streams {
     Cache.set(`paused_${streamId}`, true);
     Cache.set(`silent_${streamId}`, "paused");
     clearTimeout(Cache.get<NodeJS.Timeout>(`timeout_conf_${streamId}`));
-    if (Helper.isYT(null, streamId)) {
-      const source = Cache.get<ChildProcess>(`source_st_${streamId}`);
-      const controller = Cache.get<AbortController>(`controller_${streamId}`);
-      try {
-        if (getStream.stdin) {
-          source?.stdout?.unpipe(getStream.stdin);
-        }
-        source?.stdout?.destroy();
-        controller!.abort();
-      } catch {}
-      getStream.stdin?.write("q");
-    } else {
-      getStream.stdin?.write("q");
+    const controller = Cache.get<AbortController>(`controller_${streamId}`);
+    try {
+      controller!.abort();
+    } catch {}
+    if (!getStream.killed) {
+      getStream.kill("SIGKILL");
     }
     return;
   }
@@ -980,19 +1015,12 @@ export class Streams {
     if (!getStream) return false;
     clearTimeout(Cache.get<NodeJS.Timeout>(`timeout_conf_${streamId}`));
     Cache.set(`stops_${streamId}`, "stop");
-    if (Helper.isYT(null, streamId)) {
-      const controller = Cache.get<AbortController>(`controller_${streamId}`);
-      const source = Cache.get<ChildProcess>(`source_st_${streamId}`);
-      try {
-        if (getStream.stdin) {
-          source?.stdout?.unpipe(getStream.stdin);
-        }
-        source?.stdout?.destroy();
-        controller!.abort();
-      } catch {}
-      getStream.stdin?.write("q");
-    } else {
-      getStream.stdin?.write("q");
+    const controller = Cache.get<AbortController>(`controller_${streamId}`);
+    try {
+      controller!.abort();
+    } catch {}
+    if (!getStream.killed) {
+      getStream.kill("SIGKILL");
     }
     return true;
   }
@@ -1002,17 +1030,10 @@ export class Streams {
     if (!getStream) return false;
     clearTimeout(Cache.get<NodeJS.Timeout>(`timeout_conf_${streamId}`));
     Cache.set(`stops_${streamId}`, "force_stop");
-    if (Helper.isYT(null, streamId)) {
-      const controller = Cache.get<AbortController>(`controller_${streamId}`);
-      const source = Cache.get<ChildProcess>(`source_st_${streamId}`);
-      try {
-        if (getStream.stdin) {
-          source?.stdout?.unpipe(getStream.stdin);
-        }
-        source?.stdout?.destroy();
-        controller!.abort();
-      } catch {}
-    }
+    const controller = Cache.get<AbortController>(`controller_${streamId}`);
+    try {
+      controller!.abort();
+    } catch {}
     getStream.kill("SIGKILL");
     return true;
   }
@@ -1022,16 +1043,9 @@ export class Streams {
     if (!getStream) return false;
     Cache.set(`stops_${streamId}`, "aborted");
     const controller = Cache.get<AbortController>(`controller_${streamId}`);
-    const source = Cache.get<ChildProcess>(`source_st_${streamId}`);
-
     try {
-      if (getStream.stdin) {
-        source?.stdout?.unpipe(getStream.stdin);
-      }
-      source?.stdout?.destroy();
       controller!.abort();
     } catch {}
-    getStream.stdin?.write("q");
     getStream.kill("SIGKILL");
   }
 }

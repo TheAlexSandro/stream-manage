@@ -219,6 +219,9 @@ export class Streams {
       if (!isYT) {
         args.push("-vf", `${filters.join(",")},format=yuv420p`);
         args.push("-map", "0:v:0");
+      } else {
+        args.push("-map", "0:v:0");
+        args.push("-map", "0:a:0");
       }
     }
 

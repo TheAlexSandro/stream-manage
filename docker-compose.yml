@@ -1,0 +1,11 @@
+services:
+  app:
+    build: .
+    container_name: streambot
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ./cookies.txt:/app/cookies.txt:ro
+      - ./Assets:/app/Assets:ro
+      - "3000:3000"

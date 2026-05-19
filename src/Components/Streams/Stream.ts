@@ -68,9 +68,13 @@ export class Streams {
 
       const proc = spawn("yt-dlp", args, { signal });
 
-      setTimeout(() => {
+      proc.stdout?.once("data", () => {
         return callback(null, proc as ChildProcess);
-      }, 2000);
+      });
+
+      proc.on("error", (err) => {
+        return callback(err.message, null);
+      });
     } else if (isUrl) {
       return callback(null, source as string);
     } else {
@@ -138,16 +142,12 @@ export class Streams {
       args.push(
         "-fflags",
         "+genpts+discardcorrupt",
-        "-use_wallclock_as_timestamps",
-        "1",
         "-thread_queue_size",
-        "2048",
+        "4096",
         "-analyzeduration",
-        "2M",
+        "5M",
         "-probesize",
-        "2M",
-        "-flags",
-        "low_delay",
+        "5M",
         "-protocol_whitelist",
         "file,http,https,tcp,tls,crypto,pipe",
       );
@@ -213,16 +213,16 @@ export class Streams {
 
       args.push("-filter_complex", filterComplex, "-map", "[outv]");
     } else {
-      if (!isYT) {
-        args.push("-vf", `${filters.join(",")},format=yuv420p`);
-        args.push("-map", "0:v:0");
-      }
+      // Apply video filter and map for both YT and non-YT sources
+      args.push("-vf", `${filters.join(",")},format=yuv420p`);
+      args.push("-map", "0:v:0");
     }
 
     if (isImage) {
       args.push("-map", "1:a:0");
-    } else if (!isImage && !isYT) {
-      args.push("-map", "0:a?");
+    } else {
+      // Map audio for both YT and non-YT sources
+      args.push("-map", "0:a:0");
     }
 
     args.push(
@@ -256,6 +256,7 @@ export class Streams {
       bitrateA,
       "-ar",
       sampleRate.toString(),
+      ...(isYT ? ["-async", "1"] : []),
     );
 
     let afParts = [];
